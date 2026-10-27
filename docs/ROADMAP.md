@@ -29,6 +29,7 @@ header):
   OpenCore boots through DuetPkg.
 - **Trinity/Richland:** A10-5800K or A8-5600K on an FM2 board. Easiest CPU (no emulation), hardest GPU.
 - **Llano:** A8-3850/3870K on an FM1 A75 board with UEFI. Closest GPU to an Apple one (Redwood), hardest CPU.
+  In hand: a Samsung NP305V5A-S0BAU laptop (A8-3530MX, HD 6620G); see [TEST_MACHINES.md](TEST_MACHINES.md).
 
 Goals: OpenCore EFI per machine, the kext loads, the iGPU is found, registers read sanely (carve-out, address config,
 the GOP's scanout); a black box ported from CarrizoRed/KaberiRed (trace ring, NVRAM breadcrumb, panic report).

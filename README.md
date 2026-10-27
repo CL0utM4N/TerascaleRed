@@ -20,6 +20,15 @@ and [KaberiRed](https://github.com/CL0utM4N/KaberiRed) for the GCN 2 APUs with A
 
 Exact IDs are in [TerascaleRed/kern_asic.hpp](TerascaleRed/kern_asic.hpp), from Linux's `drm_pciids.h`.
 
+## Test machines
+
+| Machine | APU | Status |
+|---|---|---|
+| Samsung Series 3 NP305V5A-S0BAU | A8-3530MX (Llano), HD 6620G | In hand: Linux reference data first; macOS needs SSSE3 emulation |
+
+Still wanted: an RS780/RS880 board with an FX CPU, and a Trinity/Richland machine. Details, limits and the wanted
+list are in [docs/TEST_MACHINES.md](docs/TEST_MACHINES.md).
+
 ## Why it looks possible
 
 Static analysis of High Sierra 10.13.6's drivers ([docs/APPLE_X3000.md](docs/APPLE_X3000.md),

@@ -26,7 +26,8 @@ Test machines (desktops: socketed, a PCIe slot for a working dGPU while the iGPU
 header):
 - **RS780/RS880 (first):** an AM3+ 760G or 880G board with an FX-4300/6300. No CPU emulation, no shader work: the
   quickest way to prove the CAIL-spoof method on Apple's TeraScale drivers. Prefer a board with UEFI; otherwise
-  OpenCore boots through DuetPkg.- **Trinity/Richland:** A10-5800K or A8-5600K on an FM2 board. Easiest CPU (no emulation), hardest GPU.
+  OpenCore boots through DuetPkg.
+- **Trinity/Richland:** A10-5800K or A8-5600K on an FM2 board. Easiest CPU (no emulation), hardest GPU.
 - **Llano:** A8-3850/3870K on an FM1 A75 board with UEFI. Closest GPU to an Apple one (Redwood), hardest CPU.
 
 Goals: OpenCore EFI per machine, the kext loads, the iGPU is found, registers read sanely (carve-out, address config,

@@ -8,8 +8,8 @@
 - [x] Find the VLIW4 hooks in the shader compiler and build the patches (`scripts/sclib_hooks.py`,
   [SCLIB_VLIW4.md](SCLIB_VLIW4.md))
 - [x] Kext skeleton: finds the iGPU by config space, logs PCI info and registers (syntax-checked against Lilu and
-  MacKernelSDK headers; first CI build pending)
-- [ ] First CI build (10.11 deployment target, `-mno-ssse3`)
+  MacKernelSDK headers, and built by CI)
+- [x] First CI build (10.11 deployment target, `-mno-ssse3`)
 - [ ] Confirm Cayman's `CF_END` opcode and vertex-fetch rule against AMD's Cayman ISA document
 - [ ] Compare `Sumo_RLC`/`Devastator_RLC` with linux-firmware's `SUMO_rlc.bin`/`ARUBA_rlc.bin`
 - [ ] Get El Capitan 10.11.6's copies of the same drivers (an installer extractor for pre-Big Sur installers; the

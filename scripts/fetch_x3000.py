@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Fetches Apple's TeraScale 2 drivers from macOS High Sierra 10.13.6, the last release that shipped them, without a Mac
-or Apple's software update servers.
+Fetches Apple's TeraScale 1 and 2 drivers from macOS High Sierra 10.13.6, the last release that shipped them,
+without a Mac or Apple's software update servers.
 
 OpenCore Legacy Patcher root-patches these drivers onto newer macOS, and keeps the original binaries in its
 PatcherSupportPkg repository on GitHub. This does a sparse, blob-filtered clone of only the files listed below.
@@ -21,6 +21,7 @@ from pathlib import Path
 REPO = 'https://github.com/dortania/PatcherSupportPkg.git'
 BASE = 'Universal-Binaries/10.13.6/System/Library/Extensions'
 PATHS = [
+    # TeraScale 2 (Llano, Brazos; Trinity's compiler)
     'AMDRadeonX3000.kext',                # accelerator: CAIL, PM4, Evergreen/NI hardware classes
     'AMDRadeonX3000GLDriver.bundle',      # OpenGL driver and ATIRadeonX3000SCLib.dylib, the shader compiler
     'AMD5000Controller.kext',             # DCE 4 display (Evergreen)
@@ -28,6 +29,18 @@ PATHS = [
     'AMDSupport.kext',                    # shared AMD display support
     'AMDFramebuffer.kext',
     'AMDRadeonVADriver.bundle',
+    # TeraScale 1 (RS780/RS880 chipset graphics)
+    'ATIRadeonX2000.kext',                # accelerator: CAIL with RS780 paths, R6xx/R7xx hardware classes
+    'ATIRadeonX2000GLDriver.bundle',
+    'ATIRadeonX2000GA.plugin',
+    'ATIRadeonX2000VADriver.bundle',
+    'AMD2400Controller.kext',             # RV610 display (DCE 2)
+    'AMD2600Controller.kext',             # RV630
+    'AMD3800Controller.kext',             # RV670
+    'AMD4600Controller.kext',             # RV730 (DCE 3.2)
+    'AMD4800Controller.kext',             # RV770
+    'AMDLegacySupport.kext',              # shared display support for the TeraScale 1 controllers
+    'AMDLegacyFramebuffer.kext',
 ]
 
 

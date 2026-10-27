@@ -2,7 +2,7 @@
 //  kern_tr.cpp
 //  TerascaleRed
 //
-//  Phase 0: observe. Finds the TeraScale iGPU by its config-space ID (so a spoofed device-id doesn't hide it), logs
+//  Phase 0: observe. Finds the TeraScale integrated GPU (RS780/RS880 chipset or APU) by its config-space ID (so a spoofed device-id doesn't hide it), logs
 //  what the hardware reports and publishes it in the I/O Registry. Nothing is patched yet.
 //
 //  Patterns follow CarrizoRed and KaberiRed (same author, BSD-3).
@@ -79,19 +79,38 @@ void TRDriver::logPCIInfo() {
 	WIOKit::getOSDataValue(iGPU, "device-id", propDeviceId);
 	SYSLOG("tr", "found %s iGPU at %s: 1002:%04X rev 0x%02X subsys %04X:%04X (device-id property 0x%04X), %s",
 		familyName(family), safeString(iGPU->getName()), deviceId, revision, subVendor, subDevice,
-		propDeviceId & 0xFFFF, isVLIW4(family) ? "VLIW4" : "VLIW5");
+		propDeviceId & 0xFFFF, isTeraScale1(family) ? "TeraScale 1, VLIW5" : isVLIW4(family) ? "VLIW4" : "VLIW5");
 	iGPU->setProperty("TerascaleRed,family", familyName(family));
 	iGPU->setProperty("TerascaleRed,revision", revision, 8);
 }
 
 void TRDriver::probeMMIO() {
-	// Evergreen/NI-era chips put the registers in BAR2 (radeon: rmmio_base = BAR 2 before Bonaire).
+	// Every chip before Bonaire puts the registers in BAR2 (radeon: rmmio_base = BAR 2).
 	auto *map = iGPU->mapDeviceMemoryWithRegister(kIOPCIConfigBaseAddress2);
 	if (!map) {
 		SYSLOG("tr", "failed to map the MMIO BAR, skipping the register probe");
 		return;
 	}
 	auto *mmio = reinterpret_cast<volatile uint32_t *>(map->getVirtualAddress());
+	if (isTeraScale1(family)) {
+		uint32_t memSize = mmio[RegR6xx::CONFIG_MEMSIZE];
+		SYSLOG("tr", "CONFIG_MEMSIZE 0x%08X MC_VM_FB_LOCATION 0x%08X GB_TILING_CONFIG 0x%08X", memSize,
+			mmio[RegR6xx::MC_VM_FB_LOCATION], mmio[RegR6xx::GB_TILING_CONFIG]);
+		SYSLOG("tr", "GRBM_STATUS 0x%08X SRBM_STATUS 0x%08X CC_GC_SHADER_PIPE_CONFIG 0x%08X CC_RB_BACKEND_DISABLE 0x%08X",
+			mmio[RegR6xx::GRBM_STATUS], mmio[RegR6xx::SRBM_STATUS], mmio[RegR6xx::CC_GC_SHADER_PIPE_CONFIG],
+			mmio[RegR6xx::CC_RB_BACKEND_DISABLE]);
+		for (uint32_t pipe = 0; pipe < 2; pipe++) {
+			uint32_t r = pipe * RegR6xx::PipeStride;
+			SYSLOG("tr", "pipe %u: D%uCRTC_CONTROL 0x%08X GRPH_ENABLE 0x%08X surface 0x%08X pitch %u", pipe, pipe + 1,
+				mmio[RegR6xx::D1CRTC_CONTROL + r], mmio[RegR6xx::D1GRPH_ENABLE + r],
+				mmio[RegR6xx::D1GRPH_PRIMARY_SURFACE_ADDRESS + r], mmio[RegR6xx::D1GRPH_PITCH + r]);
+		}
+		iGPU->setProperty("TerascaleRed,config-memsize", memSize, 32);
+		iGPU->setProperty("TerascaleRed,fb-location", mmio[RegR6xx::MC_VM_FB_LOCATION], 32);
+		iGPU->setProperty("TerascaleRed,gb-tiling-config", mmio[RegR6xx::GB_TILING_CONFIG], 32);
+		map->release();
+		return;
+	}
 	uint32_t memSize = mmio[Reg::CONFIG_MEMSIZE];
 	uint32_t fbLocation = mmio[Reg::MC_VM_FB_LOCATION];
 	SYSLOG("tr", "CONFIG_MEMSIZE 0x%08X MC_VM_FB_LOCATION 0x%08X MC_SHARED_CHMAP 0x%08X MC_ARB_RAMCFG 0x%08X", memSize,

@@ -2,9 +2,10 @@
 //  kern_asic.hpp
 //  TerascaleRed
 //
-//  Hardware constants for the TeraScale APUs: Llano (Sumo/SuperSumo), Brazos (Palm) and Trinity/Richland (Aruba).
-//  PCI IDs from Linux include/drm/drm_pciids.h; register offsets from drivers/gpu/drm/radeon/evergreend.h, nid.h and
-//  evergreen_reg.h (MIT licensed), as dword indices into the MMIO BAR (BAR2 on these chips).
+//  Hardware constants for TeraScale integrated graphics: the RS780/RS880 chipset GPUs (TeraScale 1) and the APUs,
+//  Llano (Sumo/SuperSumo), Brazos (Palm) and Trinity/Richland (Aruba).
+//  PCI IDs from Linux include/drm/drm_pciids.h; register offsets from drivers/gpu/drm/radeon/r600d.h, r500_reg.h,
+//  evergreend.h, nid.h and evergreen_reg.h (MIT licensed), as dword indices into the MMIO BAR (BAR2 on all of them).
 //
 
 #ifndef kern_asic_hpp
@@ -15,6 +16,8 @@
 
 enum class ChipFamily {
 	Unknown,
+	RS780,     // 760G/780G/790GX chipsets, HD 3000/3200/3300: TeraScale 1 (R6xx VLIW5, 40 SPs), AVIVO-style display
+	RS880,     // 785G/880G/890GX chipsets, HD 4200/4250/4290: TeraScale 1, an RS780 derivative
 	Sumo,      // Llano, HD 6xxxD/G with 5 SIMDs ("SUMO" in Apple's CAIL): TeraScale 2 (VLIW5), DCE 4.1
 	SuperSumo, // Llano, smaller GPUs ("SUPERSUMO" in Apple's CAIL, CHIP_SUMO2 in Linux): TeraScale 2, DCE 4.1
 	Palm,      // Brazos/Ontario/Zacate ("WRESTLER" in Apple's CAIL): TeraScale 2, DCE 4.1
@@ -27,6 +30,10 @@ struct DeviceId {
 };
 
 static constexpr DeviceId SupportedDevices[] {
+	{0x9610, ChipFamily::RS780}, {0x9611, ChipFamily::RS780}, {0x9612, ChipFamily::RS780}, {0x9613, ChipFamily::RS780},
+	{0x9614, ChipFamily::RS780}, {0x9615, ChipFamily::RS780}, {0x9616, ChipFamily::RS780},
+	{0x9710, ChipFamily::RS880}, {0x9711, ChipFamily::RS880}, {0x9712, ChipFamily::RS880}, {0x9713, ChipFamily::RS880},
+	{0x9714, ChipFamily::RS880}, {0x9715, ChipFamily::RS880},
 	{0x9640, ChipFamily::Sumo}, {0x9641, ChipFamily::Sumo}, {0x9647, ChipFamily::Sumo}, {0x9648, ChipFamily::Sumo},
 	{0x964A, ChipFamily::Sumo}, {0x964B, ChipFamily::Sumo}, {0x964C, ChipFamily::Sumo}, {0x964E, ChipFamily::Sumo},
 	{0x964F, ChipFamily::Sumo},
@@ -56,6 +63,10 @@ inline ChipFamily familyForDevice(uint16_t deviceId) {
 
 inline const char *familyName(ChipFamily family) {
 	switch (family) {
+		case ChipFamily::RS780:
+			return "RS780 (HD 3000/3200/3300)";
+		case ChipFamily::RS880:
+			return "RS880 (HD 4200/4250/4290)";
 		case ChipFamily::Sumo:
 			return "Llano (Sumo)";
 		case ChipFamily::SuperSumo:
@@ -72,8 +83,28 @@ inline const char *familyName(ChipFamily family) {
 // The shader ISA the GPU runs: what Apple's compiler must emit for it.
 inline bool isVLIW4(ChipFamily family) { return family == ChipFamily::Aruba; }
 
+// TeraScale 1 chips use R6xx register offsets and AVIVO-style display registers, and Apple's ATIRadeonX2000.
+inline bool isTeraScale1(ChipFamily family) { return family == ChipFamily::RS780 || family == ChipFamily::RS880; }
+
+// R6xx (RS780/RS880): byte offsets / 4, from r600d.h and r500_reg.h.
+namespace RegR6xx {
+	static constexpr uint32_t SRBM_STATUS = 0x0E50 / 4;
+	static constexpr uint32_t MC_VM_FB_LOCATION = 0x2180 / 4;
+	static constexpr uint32_t CONFIG_MEMSIZE = 0x5428 / 4;
+	static constexpr uint32_t GRBM_STATUS = 0x8010 / 4;
+	static constexpr uint32_t CC_GC_SHADER_PIPE_CONFIG = 0x8950 / 4;
+	static constexpr uint32_t GB_TILING_CONFIG = 0x98F0 / 4;
+	static constexpr uint32_t CC_RB_BACKEND_DISABLE = 0x98F4 / 4;
+	// AVIVO display pipe registers, pipe 0 (D1); pipe 1 (D2) is 0x800 bytes later.
+	static constexpr uint32_t D1CRTC_CONTROL = 0x6080 / 4;
+	static constexpr uint32_t D1GRPH_ENABLE = 0x6100 / 4;
+	static constexpr uint32_t D1GRPH_PRIMARY_SURFACE_ADDRESS = 0x6110 / 4;
+	static constexpr uint32_t D1GRPH_PITCH = 0x6120 / 4;
+	static constexpr uint32_t PipeStride = 0x800 / 4;
+}
+
 namespace Reg {
-	// Byte offsets / 4. Same on Evergreen, Northern Islands and these APUs unless noted.
+	// Evergreen and later (the APUs): byte offsets / 4. Same on Evergreen, Northern Islands and the APUs.
 	static constexpr uint32_t SRBM_STATUS = 0x0E50 / 4;
 	static constexpr uint32_t MC_SHARED_CHMAP = 0x2004 / 4;
 	static constexpr uint32_t MC_VM_FB_LOCATION = 0x2024 / 4;

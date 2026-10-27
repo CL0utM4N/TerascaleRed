@@ -5,6 +5,8 @@
 - [x] Find Apple's TeraScale 2 drivers without a Mac (`scripts/fetch_x3000.py`, from OCLP's PatcherSupportPkg)
 - [x] Inventory APU and Cayman support in `AMDRadeonX3000`, the GL driver and the display controllers
   ([APPLE_X3000.md](APPLE_X3000.md))
+- [x] Inventory RS780/RS880 support in `ATIRadeonX2000` and the TeraScale 1 controllers
+  ([APPLE_X2000.md](APPLE_X2000.md)); kext skeleton finds and probes RS780/RS880 too
 - [x] Find the VLIW4 hooks in the shader compiler and build the patches (`scripts/sclib_hooks.py`,
   [SCLIB_VLIW4.md](SCLIB_VLIW4.md))
 - [x] Kext skeleton: finds the iGPU by config space, logs PCI info and registers (syntax-checked against Lilu and
@@ -12,6 +14,9 @@
 - [x] First CI build (10.11 deployment target, `-mno-ssse3`)
 - [ ] Confirm Cayman's `CF_END` opcode and vertex-fetch rule against AMD's Cayman ISA document
 - [ ] Compare `Sumo_RLC`/`Devastator_RLC` with linux-firmware's `SUMO_rlc.bin`/`ARUBA_rlc.bin`
+- [ ] Identify RS780's CP microcode among X2000's codenamed images (`BOOM`, `LAKA`, `SHAKA`, …) against
+  linux-firmware's `RS780_pfp.bin`/`RS780_me.bin`
+- [ ] Find which chips `AMDLegacySupport` sends to `AtiAtomBiosDce31`, and whether CAIL treats RS880 as RS780
 - [ ] Get El Capitan 10.11.6's copies of the same drivers (an installer extractor for pre-Big Sur installers; the
   scripts find everything by symbol, so they should carry over)
 
@@ -19,7 +24,9 @@
 
 Test machines (desktops: socketed, a PCIe slot for a working dGPU while the iGPU is tested headless, often a serial
 header):
-- **Trinity/Richland:** A10-5800K or A8-5600K on an FM2 board. Easiest CPU (no emulation), hardest GPU.
+- **RS780/RS880 (first):** an AM3+ 760G or 880G board with an FX-4300/6300. No CPU emulation, no shader work: the
+  quickest way to prove the CAIL-spoof method on Apple's TeraScale drivers. Prefer a board with UEFI; otherwise
+  OpenCore boots through DuetPkg.- **Trinity/Richland:** A10-5800K or A8-5600K on an FM2 board. Easiest CPU (no emulation), hardest GPU.
 - **Llano:** A8-3850/3870K on an FM1 A75 board with UEFI. Closest GPU to an Apple one (Redwood), hardest CPU.
 
 Goals: OpenCore EFI per machine, the kext loads, the iGPU is found, registers read sanely (carve-out, address config,
@@ -27,6 +34,8 @@ the GOP's scanout); a black box ported from CarrizoRed/KaberiRed (trace ring, NV
 
 ## Phase 2: display
 
+- **RS780/RS880 (DCE 3.x, AVIVO):** spoof RV610 (`94C8`) for `AMDLegacySupport` and the TeraScale 1 controllers;
+  check what `AtiAtomBiosDce31` covers; PowerPlay through `PhwRS780`.
 - **Llano/Brazos (DCE 4.1):** spoof Redwood (or Cedar) for `AMD5000Controller`; patch display limits (pipes, PLLs),
   the "VRAM" carve-out, the VBIOS source (ACPI VFCT into `ATY,bin_image`, as KaberiRed does).
 - **Trinity (DCE 6.1):** `AMD7000Controller` (DCE 6.0) is the nearest display driver, but it belongs to the GCN
@@ -35,6 +44,8 @@ the GOP's scanout); a black box ported from CarrizoRed/KaberiRed (trace ring, NV
 
 ## Phase 3: accelerator bring-up
 
+- RS780/RS880: spoof RV610 for `ATIRadeonX2000`; CAIL's RS780 paths (carve-out, UMA/sideport interleaving); the
+  RS780 CP microcode if the kext lacks it.
 - Spoof Redwood (Llano) / Turks (Trinity) for `AMDRadeonX3000`; check CAIL takes the Sumo/Devastator paths from the
   real device ID.
 - Swap in the APUs' PFP/ME microcode; UMA (no dedicated VRAM); PowerPlay through `PhwSumo`/`PhwTrinity`; power
@@ -43,6 +54,7 @@ the GOP's scanout); a black box ported from CarrizoRed/KaberiRed (trace ring, NV
 
 ## Phase 4: shaders
 
+- **TeraScale 1 (RS780/RS880):** none expected: the R6xx ISA RV610 already uses.
 - **VLIW5 (Llano, Brazos):** none expected beyond Redwood's code paths.
 - **VLIW4 (Trinity):** apply the three `ATIRadeonX3000SCLib` patches (page-patched as CarrizoRed patches `libSC`);
   check compiled output through OpenCL program binaries on any TeraScale 2 machine first; fix what's left (vertex

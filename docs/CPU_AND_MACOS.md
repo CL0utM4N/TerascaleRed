@@ -1,13 +1,15 @@
 # CPU cores and macOS versions
 
-The GPU decides the newest macOS TerascaleRed can use (High Sierra 10.13.6 ships the last TeraScale 2 drivers). The
+The GPU decides the newest macOS TerascaleRed can use (High Sierra 10.13.6 ships the last TeraScale 1 and 2 drivers). The
 CPU cores decide the oldest, and whether emulation is needed at all.
 
-| APU | Cores (family) | SSE3 | SSSE3 | SSE4.1/4.2 | AVX |
+| Platform | Cores (family) | SSE3 | SSSE3 | SSE4.1/4.2 | AVX |
 |---|---|---|---|---|---|
 | Llano | K10 "Husky" (12h) | yes | **no** | **no** (SSE4a only) | no |
 | Brazos | Bobcat (14h) | yes | yes | **no** (SSE4a only) | no |
 | Trinity/Richland | Piledriver (15h) | yes | yes | yes | yes |
+| RS780/RS880 boards with FX | Bulldozer/Piledriver (15h) | yes | yes | yes | yes |
+| RS780/RS880 boards with Phenom II/Athlon II | K10 (10h) | yes | **no** | **no** | no |
 
 What macOS expects:
 - **Since Lion (10.7), SSSE3.** The old AMD kernels for K10 (Phenom, Llano) carried opemu, an SSE3/SSSE3 emulator
@@ -21,6 +23,8 @@ What macOS expects:
 ## Per target
 
 - **Trinity/Richland:** no emulation; AMD Vanilla patches; macOS limited only by the GPU work.
+- **RS780/RS880:** the GPU is on the motherboard, so the CPU is a choice. AM3+ 760G/880G boards take FX CPUs: no
+  emulation, AMD Vanilla patches. With K10, the same as Llano.
 - **Brazos:** El Capitan with AMD kernel patches, no emulation. High Sierra would need SSE4.1 emulation for whatever
   uses it (unknown).
 - **Llano:** SSSE3 emulation on any release since Lion, plus SSE4.1 on Sierra and later. Quickest: **El Capitan with
